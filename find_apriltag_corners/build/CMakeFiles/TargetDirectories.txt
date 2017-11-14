@@ -1,0 +1,4 @@
+/home/daniel/software/find_apriltag_corners/build/CMakeFiles/edit_cache.dir
+/home/daniel/software/find_apriltag_corners/build/CMakeFiles/rebuild_cache.dir
+/home/daniel/software/find_apriltag_corners/build/CMakeFiles/find_corners_helper_python.dir
+/home/daniel/software/find_apriltag_corners/build/CMakeFiles/find_corners.dir
