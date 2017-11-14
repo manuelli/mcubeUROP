@@ -1,1 +1,0 @@
-# mcubeUROP-calibration-challenge
