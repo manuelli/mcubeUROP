@@ -6,8 +6,11 @@ import cv2
 from numpy import array as npa
 import os, json
 
+import yaml
+import spartan.utils.utils as spartanUtils
 
-save_dir = os.environ["HOME"] + "/software/find_apriltag_corners/camera_calib/"
+# save_dir = os.environ["HOME"] + "/software/find_apriltag_corners/camera_calib/"
+save_dir = os.environ["SPARTAN_SOURCE_DIR"] + "/sandbox/camera_calib/"
 def quat_to_rod(q):
     # q = [qx, qy, qz, qw]
     rot = tfm.quaternion_matrix(q)[0:3][:, 0:3]
@@ -45,10 +48,10 @@ class Program:
         #print point2Ds_p
         point2Ds_pp = [list(p[0]) for p in point2Ds_p]
         diff = npa(point2Ds_pp, dtype=np.float) - npa(self.point2Ds, dtype=np.float)
-        diff = diff.flatten(1)
         #import pdb;
         #pdb.set_trace()
-        #print diff
+        print diff
+        diff = diff.flatten(1)
         res = np.linalg.norm(diff)
         print res / 27.0
         return diff
@@ -83,6 +86,66 @@ class Program:
         print 'K: ', [res_1.x[0], 0.0, res_1.x[2], 0.0, res_1.x[1], res_1.x[3], 0.0, 0.0, 1.0]
         print 'P: ', [res_1.x[0], 0.0, res_1.x[2], 0.0, 0.0, res_1.x[1], res_1.x[3], 0.0, 0.0, 0.0, 1.0, 0.0]
         #print res_1
+
+        data = dict()
+        data['extrinsics'] = dict()
+        data['extrinsics']['reference_link_name'] = 'base'
+        transformDict = dict()
+        transformDict['translation'] = dict()
+        transformDict['translation']['x'] = translation.tolist()[0]
+        transformDict['translation']['y'] = translation.tolist()[1]
+        transformDict['translation']['z'] = translation.tolist()[2]
+
+        transformDict['rotation'] = dict()
+        transformDict['rotation']['x'] = quaternion.tolist()[0]
+        transformDict['rotation']['y'] = quaternion.tolist()[1]
+        transformDict['rotation']['z'] = quaternion.tolist()[2]
+        transformDict['rotation']['w'] = quaternion.tolist()[3]
+
+        data['extrinsics']['transform_to_reference_link'] = transformDict
+
+        spartanSourceDir = spartanUtils.getSpartanSourceDir()
+        extrinsicsFilename = os.path.join(spartanSourceDir, 'sandbox', 'extrinsics.yaml')
+        spartanUtils.saveToYaml(data, extrinsicsFilename)
+
+        intrinsics = dict()
+        intrinsics['image_width'] = 640
+        intrinsics['image_height'] = 480
+        intrinsics['camera_name'] = 'xtion_rgb'
+        camMatrix = dict()
+        camMatrix['rows'] = 3
+        camMatrix['cols'] = 3
+        KList = res_1.x.tolist()
+        camMatrix['data'] = [KList[0], 0.0, KList[2], 0.0, KList[1], KList[3], 0.0, 0.0, 1.0]
+
+        intrinsics['camera_matrix'] = camMatrix
+
+        distortion_coeff = dict()
+        distortion_coeff['rows'] = 1
+        distortion_coeff['cols'] = 5
+        distortion_coeff['data'] = [0]*5
+
+        intrinsics['distortion_model'] = 'plumb_bob'
+        intrinsics['distortion_coefficients'] = distortion_coeff
+
+        intrinsics['rectification_matrix'] = dict()
+        intrinsics['rectification_matrix']['rows'] = 3
+        intrinsics['rectification_matrix']['cols'] = 3
+        intrinsics['rectification_matrix']['data'] = [1.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000, 0.000000, 0.000000, 1.000000]
+
+        intrinsics['projection_matrix'] = dict()
+        intrinsics['projection_matrix']['rows'] = 3
+        intrinsics['projection_matrix']['cols'] = 4
+        intrinsics['projection_matrix']['data'] = [KList[0], 0.0, KList[2], 0.0, 0.0, KList[1], KList[3], 0.0, 0.0, 0.0, 1.0, 0.0]
+
+
+        intrinsicsFilename = os.path.join(spartanSourceDir, 'sandbox', 'intrinsics.yaml')
+        spartanUtils.saveToYaml(intrinsics, intrinsicsFilename)
+        
+        
+
+
+
         return res_1.x
         
 
@@ -90,10 +153,18 @@ if __name__ == '__main__' or __name__ == 'calib3d2d':
     color1 = (0,255,255)
     color2 = (0,0,255)
     color3 = (255,0,255)
-    #x0_ext = [5.08592196e-01, -5.96469288e-01, 6.09164354e-01] + quat_to_rod(
-     #   [9.05378371e-01, 3.06042346e-02, -5.82887034e-02, -4.19470873e-01])
-    x0_ext = [7.168e-01, -7.688e-02, 3.788e-01] + quat_to_rod(
-        [6.89e-01+np.random.rand(), 6.44e-01+np.random.rand(), -2.207e-01+np.random.rand(), -2.4675e-01++np.random.rand()])
+#pose [0.7168, -0.07688, 0.3788, 0.499472915586398, 0.8532309406659719, 0.07190354748447386, -0.1317332469235899]
+#fx,fy,cx,cy,distCoeff[5] [605.22376, 605.37555, 320.96071, 233.59959, 0.02671554, 0.6672619, -0.006263159, 0.0006014189, -2.923799]
+
+    x0_ext_old = [1.7924193532299717, -0.1019227943559253, 0.7797246010193745] + [0.5828151822317369, 0.5618307868337208, -0.39456081733618475, -0.43473485223638464]
+    
+    transform = tfm.concatenate_matrices(tfm.translation_matrix(x0_ext_old[0:3]), tfm.quaternion_matrix(x0_ext_old[3:7]))
+    inversed_transform = tfm.inverse_matrix(transform)
+    translation = tfm.translation_from_matrix(inversed_transform)
+    quaternion = tfm.quaternion_from_matrix(inversed_transform)
+
+    x0_ext =  translation.tolist() + quat_to_rod(quaternion.tolist())
+
     x0_int = [605.22376, 605.37555, 320.96071, 233.59959, 2.671554e-02, 6.672619e-01, -6.263159e-03, 6.014189e-04,
               -2.923799e+00]
     x0 = x0_int + x0_ext
@@ -124,8 +195,8 @@ if __name__ == '__main__' or __name__ == 'calib3d2d':
 
     for i, d in enumerate(data):
         image_viz = cv2.imread(save_dir + d['pic_path'])
-        image_unlabled = cv2.imread(save_dir + d['pic_path'])
-        cv2.imshow("image_unlabeled", image_unlabled)
+        #image_unlabled = cv2.imread(save_dir + d['pic_path'])
+        #cv2.imshow("image_unlabeled", image_unlabled)
 
         pt_int = tuple([int(round(p)) for p in d['cross2d']])
         cv2.line(image_viz, (pt_int[0]-2, pt_int[1]), (pt_int[0]+2, pt_int[1]), color1)
@@ -136,8 +207,8 @@ if __name__ == '__main__' or __name__ == 'calib3d2d':
         cv2.line(image_viz, (pt_int[0], pt_int[1]-2), (pt_int[0], pt_int[1]+2), color3)
         
         pt_int = tuple([int(round(p)) for p in point2Ds_p[i][0]])
-        cv2.line(image_viz, (pt_int[0]-2, pt_int[1]), (pt_int[0]+2, pt_int[1]), color2)
-        cv2.line(image_viz, (pt_int[0], pt_int[1]-2), (pt_int[0], pt_int[1]+2), color2)
+        #cv2.line(image_viz, (pt_int[0]-2, pt_int[1]), (pt_int[0]+2, pt_int[1]), color2)
+        #cv2.line(image_viz, (pt_int[0], pt_int[1]-2), (pt_int[0], pt_int[1]+2), color2)
         cv2.imshow("image", image_viz)
 
         

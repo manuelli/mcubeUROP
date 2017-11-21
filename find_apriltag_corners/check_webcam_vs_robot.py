@@ -35,8 +35,11 @@ pts_apriltag = []
 rospy.init_node('robot_vs_webcam')
 listener = tf.TransformListener()
 
-limits = [0.4, 0.6, -0.2, +0.2, 0.30, 0.50]  #[xmin, xmax, ymin, ymax, zmin, zmax]
-nseg = [3, 3, 3]
+
+# back left pose (0.244, -0.495, 0.472)
+# front left pose (0.696, -0.333, 0.460)
+limits = [0.244, 0.69, -0.495, +0.495, 0.30, 0.50]  #[xmin, xmax, ymin, ymax, zmin, zmax]
+nseg = [6, 6, 3]
 nrotate = 1
 ori = [0.19079229, -0.67772497,  0.16148602,  0.69152688] # observer
 cam_id = 'observer'  
@@ -45,7 +48,9 @@ cam_id = 'observer'
 #position = [0.51102088,  0.01480124,  0.50132378]
 #quat = [ 0.19079229, -0.67772497,  0.16148602,  0.69152688] # w,x,y,z
 
-image_topic = "/camera_1112170110/rgb/image_raw"
+image_topic = "/camera_xtion_ebay/ir/image"
+# image_topic = "/camera_xtion_ebay/rgb/image_raw"
+
 globalacc = 2             # some big number means no limit, in m/s^2
 
 #setCartRos = rospy.ServiceProxy('/robot2_SetCartesian', robot_SetCartesian)
@@ -107,7 +112,8 @@ def setCart(pos, ori): 											#pos in meters [x, y, z], orientation in quate
     poseStamped.pose.orientation.x = ori[1]
     poseStamped.pose.orientation.y = ori[2]
     poseStamped.pose.orientation.z = ori[3]
-    robotService.moveToCartesianPosition(poseStamped)
+    ikSuccess = robotService.moveToCartesianPosition(poseStamped)
+    return ikSuccess
     
 #setZone(0) ## user may have different setZone, setSpeed, setAcc. change accrodingly
 #setSpeed(200, 60)
@@ -121,10 +127,15 @@ world_frame_id = "base"
 
 data = []
 #save_dir = os.environ["DATA_BASE"] + "/camera_calib/"
-save_dir = os.environ["HOME"] + "/software/find_apriltag_corners/camera_calib/"
+# save_dir = os.environ["HOME"] + "/software/find_apriltag_corners/camera_calib/"
+
+save_dir = os.environ["SPARTAN_SOURCE_DIR"] + "/sandbox/camera_calib/"
 
 import shutil
-shutil.rmtree(save_dir)
+try:
+    shutil.rmtree(save_dir)
+except:
+    pass    
 # os.rmdir(save_dir)
 cmd = "mkdir -p " + save_dir
 # os.mkdir(save_dir)
@@ -137,7 +148,10 @@ os.system(cmd)
 for x in np.linspace(limits[0],limits[1], nseg[0]):
     for y in np.linspace(limits[2],limits[3], nseg[1]):
         for z in np.linspace(limits[4],limits[5], nseg[2]):
-            setCart([x,y,z], ori)				
+            ikSuccess = setCart([x,y,z], ori)
+            if not ikSuccess:
+                print "ik failed, skipping"
+                continue			
             # get robot 3d point
             
             rospy.sleep(0.1)
@@ -146,11 +160,17 @@ for x in np.linspace(limits[0],limits[1], nseg[0]):
             # take picture of camera
             msg = rospy.wait_for_message(image_topic, Image) # user needs to change this topic
             timestr = "%.6f" % msg.header.stamp.to_sec()
-            image_name = str(save_dir)+timestr+".pgm"
-            cv_image = bridge.imgmsg_to_cv2(msg, "bgr8")
+
+            image_name = str(save_dir)+timestr+".jpeg"
+            # print "msg ", msg
+            print "encoding = ", msg.encoding
+            try:
+                cv_image = bridge.imgmsg_to_cv2(msg, msg.encoding) # for the IR
+            except CvBridgeError, e:
+                print(e)
             cv2.imwrite(image_name, cv_image)
             
-            data.append({"cross3d": cross_poselist, "pic_path": timestr+".pgm"})
+            data.append({"cross3d": cross_poselist, "pic_path": timestr+".jpeg"})
     
 import json
 with open(save_dir+'data.json', 'w') as outfile:

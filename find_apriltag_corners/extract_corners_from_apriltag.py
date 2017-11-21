@@ -19,7 +19,8 @@ _dll = cdll.LoadLibrary(os.environ["HOME"] + '/spartan/modules/spartan/mcubeUROP
 _find_corners_helper = _dll['find_corners_pythonhelper']
 _find_corners_helper.argtypes = [c_void_p, c_void_p]
 
-save_dir = os.environ["HOME"] + "/software/find_apriltag_corners/camera_calib/"
+# save_dir = os.environ["HOME"] + "/software/find_apriltag_corners/camera_calib/"
+save_dir = os.environ["SPARTAN_SOURCE_DIR"] + "/sandbox/camera_calib/"
 with open(save_dir+'data.json') as data_file:    
     data = json.load(data_file)
   
