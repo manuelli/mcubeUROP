@@ -126,7 +126,7 @@ if __name__ == '__main__' or __name__ == 'calib3d2d':
         image_viz = cv2.imread(save_dir + d['pic_path'])
         image_unlabled = cv2.imread(save_dir + d['pic_path'])
         cv2.imshow("image_unlabeled", image_unlabled)
-        
+
         pt_int = tuple([int(round(p)) for p in d['cross2d']])
         cv2.line(image_viz, (pt_int[0]-2, pt_int[1]), (pt_int[0]+2, pt_int[1]), color1)
         cv2.line(image_viz, (pt_int[0], pt_int[1]-2), (pt_int[0], pt_int[1]+2), color1)
@@ -139,6 +139,7 @@ if __name__ == '__main__' or __name__ == 'calib3d2d':
         cv2.line(image_viz, (pt_int[0]-2, pt_int[1]), (pt_int[0]+2, pt_int[1]), color2)
         cv2.line(image_viz, (pt_int[0], pt_int[1]-2), (pt_int[0], pt_int[1]+2), color2)
         cv2.imshow("image", image_viz)
+
         
         avg_eucl_error += np.linalg.norm(point2Ds_p_nd[i][0]-d['cross2d'])
         

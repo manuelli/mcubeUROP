@@ -45,7 +45,7 @@ else()
   message("CGAL not found, can not use new quad detector")
 endif()
 
-set(AT_LIBS /home/daniel/software/apriltags-cpp/build/libapriltags.a ${OPENCV_LDFLAGS})
+set(AT_LIBS /home/manuelli/spartan/modules/spartan/mcubeUROP/apriltags-cpp/build/libapriltags.a ${OPENCV_LDFLAGS})
 
 message(STATUS "AT_LIBS" ${OPENCV_LDFLAGS})
 

@@ -15,7 +15,7 @@ import numpy as np
 #_ikfastAndFindBest.argtypes = [c_void_p, c_void_p, c_void_p, c_void_p, c_void_p]
 ###
 from ctypes import cdll, c_void_p, c_int,c_char_p
-_dll = cdll.LoadLibrary(os.environ["HOME"] + '/software/find_apriltag_corners/build/libfind_corners_helper_python.so')
+_dll = cdll.LoadLibrary(os.environ["HOME"] + '/spartan/modules/spartan/mcubeUROP/find_apriltag_corners/build/libfind_corners_helper_python.so')
 _find_corners_helper = _dll['find_corners_pythonhelper']
 _find_corners_helper.argtypes = [c_void_p, c_void_p]
 
@@ -58,12 +58,19 @@ for d in data:
         image = cv2.imread(save_dir + d['pic_path'])
         cv2.namedWindow("image")
         cv2.imshow('image',image)
+
+
+        while True:
+            # display the image and wait for a keypress
+            key = cv2.waitKey(3) & 0xFF
+            if key == ord("n"):
+                break
     except:
         continue
     
 
     corner_list = find_corners_cpp(save_dir + d['pic_path'])
-    #print(corner_list)
+    print(corner_list)
     d["cross2d"] = corner_list.tolist()[-2:]
     
     if corner_list[0] < 0.001:
@@ -71,6 +78,7 @@ for d in data:
     #corners = np.float32([refPt])
     #d["cross2d"] = corners.tolist()[0]
     newdata.append(d)
+
 
 
 import json
