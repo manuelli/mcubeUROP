@@ -55,19 +55,19 @@ def find_corners_cpp(filename):
 
 newdata = []
 for d in data:
-    try:
-        image = cv2.imread(save_dir + d['pic_path'])
-        cv2.namedWindow("image")
-        cv2.imshow('image',image)
+    # try:
+    #     image = cv2.imread(save_dir + d['pic_path'])
+    #     cv2.namedWindow("image")
+    #     cv2.imshow('image',image)
 
 
-        while True:
-            # display the image and wait for a keypress
-            key = cv2.waitKey(3) & 0xFF
-            if key == ord("n"):
-                break
-    except:
-        continue
+    #     while True:
+    #         # display the image and wait for a keypress
+    #         key = cv2.waitKey(3) & 0xFF
+    #         if key == ord("n"):
+    #             break
+    # except:
+    #     continue
     
 
     corner_list = find_corners_cpp(save_dir + d['pic_path'])

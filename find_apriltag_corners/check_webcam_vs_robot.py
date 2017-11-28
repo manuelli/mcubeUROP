@@ -20,6 +20,7 @@ from sensor_msgs.msg import Image
 
 # system
 import os
+import sys
 
 # spartan
 import spartan.utils.ros_utils as rosUtils
@@ -48,7 +49,7 @@ cam_id = 'observer'
 #position = [0.51102088,  0.01480124,  0.50132378]
 #quat = [ 0.19079229, -0.67772497,  0.16148602,  0.69152688] # w,x,y,z
 
-image_topic = "/camera_xtion_ebay/ir/image"
+image_topic = sys.argv[1] 
 # image_topic = "/camera_xtion_ebay/rgb/image_raw"
 
 globalacc = 2             # some big number means no limit, in m/s^2
